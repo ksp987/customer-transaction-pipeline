@@ -31,3 +31,4 @@ adf/backup_*
 docs/
 
 
+data/raw/finance/txn_payments/*
