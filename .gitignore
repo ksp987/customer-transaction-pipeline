@@ -1,0 +1,33 @@
+# Power BI autosaves and temp
+*.pbix.autosave
+*.tmp
+
+# Python cache and virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS and IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Sensitive or local-only configs
+credentials.json
+config.yaml
+secrets.env
+
+# Large raw files (keep only samples)
+data/raw/*.csv
+data/raw/*.json
+data/raw/*.parquet
+
+# ADF backup exports
+adf/backup_*
+
+# Docs maintained in Confluence
+docs/
+
+
