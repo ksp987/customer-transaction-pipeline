@@ -1,45 +1,40 @@
-# GetS3TransactionData_lambda.py
-# This Lambda function retrieves a CSV file from an S3 bucket, parses it, and returns
-# the data in JSON format. It also handles CORS by allowing all origins.
+# Note: Ensure that you have the necessary AWS credentials configured
+# and the boto3 library installed in your Python environment.
+# This script lists all objects in a specified S3 bucket and prefix
 
+import argparse
 import boto3
-import json
-import csv
 
-def lambda_handler(event, context):
-    # Read query params
-    params = event.get('queryStringParameters') or {}
-    start = int(params.get('start', 0))
-    limit = int(params.get('limit', 10))
+def list_all_objects(bucket: str, prefix: str):
+    """Yield all object keys and sizes under a prefix."""
 
-    s3 = boto3.client('s3')
-    bucket = 'rawdatatecron'
-    key = 'raw/finance/txn_payments/year=2024/month=06/PS_20174392719_1491204439457_log.csv'
+    s3 = boto3.client("s3")
+    paginator = s3.get_paginator("list_objects_v2")
+    for page in paginator.paginate(Bucket=bucket, Prefix=prefix):
+        for obj in page.get("Contents", []):
+            yield obj["Key"], obj["Size"]
 
-    try:
-        response = s3.get_object(Bucket=bucket, Key=key)
-        lines = (line.decode('utf-8-sig') for line in response['Body'].iter_lines())
-        reader = csv.DictReader(lines)
 
-        data = []
-        for i, row in enumerate(reader):
-            if i < start:
-                continue
-            if i >= start + limit:
-                break
-            data.append(row)
+def main() -> None:
+    """CLI entry point for listing S3 objects."""
 
-        return {
-            'statusCode': 200,
-            'body': json.dumps(data),
-            'headers': {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            }
-        }
+    parser = argparse.ArgumentParser(description="List objects in an S3 prefix")
+    parser.add_argument(
+        "--bucket",
+        default="rawdatatecron",
+        help="Name of the S3 bucket"
+    )
+    parser.add_argument(
+        "--prefix",
+        default="raw/finance/txn_payments/",
+        help="Prefix within the bucket to list"
+    )
 
-    except Exception as e:
-        return {
-            'statusCode': 500,
-            'body': json.dumps({'error': str(e) or 'Unknown error'})
-        }
+    args = parser.parse_args()
+
+    for key, size in list_all_objects(args.bucket, args.prefix):
+        print(key, size)
+
+
+if __name__ == "__main__":
+    main()
